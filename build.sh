@@ -50,8 +50,8 @@ function make_zip {
 		cp $KERNEL_DIR/arch/arm64/boot/dts/qcom/msm8953-qrd-sku3-mido-nontreble.dtb $REPACK_DIR/treble-unsupported/
 		cp $KERNEL_DIR/arch/arm64/boot/dts/qcom/msm8953-qrd-sku3-mido-treble.dtb $REPACK_DIR/treble-supported/
 		cp $KERNEL_DIR/arch/arm64/boot/Image.gz $REPACK_DIR/kernel/
-		zip -r9 `echo $AK_VER`.zip *
-		cp `echo $AK_VER`.zip $ZIP_MOVE
+		zip -r9 `echo $ZIP_NAME`.zip *
+		cp *.zip $ZIP_MOVE
 		cd $KERNEL_DIR
 }
 
@@ -68,7 +68,8 @@ echo -e "${restore}"
 
 # Vars
 BASE_AK_VER="REVOLT"
-AK_VER="$BASE_AK_VER$VER"
+DATE=`date +"%Y%m%d-%H%M"`
+ZIP_NAME="$AK_VER"-"$DATE".zip
 export LOCALVERSION=~`echo $AK_VER`
 export LOCALVERSION=~`echo $AK_VER`
 export ARCH=arm64
