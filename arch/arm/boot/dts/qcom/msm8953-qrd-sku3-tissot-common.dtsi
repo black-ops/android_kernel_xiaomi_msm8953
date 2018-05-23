@@ -58,4 +58,7 @@
 
 
 #include "tissot/msm8953-qrd-sku3-tissot-overlay.dtsi"
+<<<<<<< HEAD:arch/arm/boot/dts/qcom/msm8953-qrd-sku3-tissot-common.dtsi
 #include "msm8953-qrd-sku3-xiaomi-common.dtsi"
+=======
+>>>>>>> cc3a660a1f89... tissot: arm: dts/qcom: Add support for building treble DTB:arch/arm/boot/dts/qcom/msm8953-qrd-sku3-tissot-common.dtsi
