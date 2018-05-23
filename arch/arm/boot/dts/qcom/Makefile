@@ -246,8 +246,13 @@ dtb-$(CONFIG_ARCH_MSM8940) += msm8940-pmi8937-cdp.dtb \
 	msm8940-pmi8940-qrd-sku7.dtb
 
 ifeq ($(CONFIG_MACH_XIAOMI_MSM8953),y)
-dtb-$(CONFIG_MACH_XIAOMI_MIDO) += msm8953-qrd-sku3-mido.dtb
-dtb-$(CONFIG_MACH_XIAOMI_TISSOT) += msm8953-qrd-sku3-tissot.dtb
+ifneq ($(CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE),y)
+# Build mido non-treble and tissot treble DTBs as well
+dtb-$(CONFIG_MACH_XIAOMI_MIDO) += msm8953-qrd-sku3-mido-nontreble.dtb
+dtb-$(CONFIG_MACH_XIAOMI_TISSOT) += msm8953-qrd-sku3-tissot-treble.dtb
+endif
+dtb-$(CONFIG_MACH_XIAOMI_MIDO) += msm8953-qrd-sku3-mido-treble.dtb
+dtb-$(CONFIG_MACH_XIAOMI_TISSOT) += msm8953-qrd-sku3-tissot-nontreble.dtb
 else
 dtb-$(CONFIG_ARCH_MSM8953) += msm8953-sim.dtb \
 	msm8953-rumi.dtb \
