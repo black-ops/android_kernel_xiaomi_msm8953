@@ -13,7 +13,7 @@ THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
 KERNEL="Image"
 DTBIMAGE="dtb"
 export CROSS_COMPILE=~/Android/kernel/tc/gcc/aosp/aarch64-linux-android-4.9/bin/aarch64-linux-android-
-DEFCONFIG="revolt_defconfig"
+DEFCONFIG="mido_defconfig"
 
 # Kernel Details
 VER=".EAS"
