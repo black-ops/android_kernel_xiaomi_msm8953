@@ -64,7 +64,6 @@ struct pwrgov_policy {
 struct pwrgov_cpu {
     struct update_util_data update_util;
     struct pwrgov_policy *sg_policy;
-    unsigned int cpu;
 
     unsigned long iowait_boost;
     unsigned long iowait_boost_max;
@@ -89,21 +88,6 @@ static DEFINE_PER_CPU(struct pwrgov_tunables, cached_tunables);
 static bool pwrgov_should_update_freq(struct pwrgov_policy *sg_policy, u64 time)
 {
     s64 delta_ns;
-
-     /*
-     * Since cpufreq_update_util() is called with rq->lock held for
-     * the @target_cpu, our per-cpu data is fully serialized.
-     *
-     * However, drivers cannot in general deal with cross-cpu
-     * requests, so while get_next_freq() will work, our
-     * pwrgov_update_commit() call may not.
-     *
-     * Hence stop here for remote requests if they aren't supported
-     * by the hardware, as calculating the frequency is pointless if
-     * we cannot in fact act on it.
-     */
-    if (!cpufreq_can_do_remote_dvfs(sg_policy->policy))
-	return false;
 
     if (sg_policy->work_in_progress)
 	return false;
@@ -142,17 +126,6 @@ static bool pwrgov_up_down_rate_limit(struct pwrgov_policy *sg_policy, u64 time,
     return false;
 }
 
-static void pwrgov_fast_switch(struct cpufreq_policy *policy,
-			      unsigned int next_freq)
-{
-	next_freq = cpufreq_driver_fast_switch(policy, next_freq);
-	if (next_freq == CPUFREQ_ENTRY_INVALID)
-		return;
-
-	policy->cur = next_freq;
-	trace_cpu_frequency(next_freq, smp_processor_id());
-}
-
 static void pwrgov_update_commit(struct pwrgov_policy *sg_policy, u64 time,
 		unsigned int next_freq)
 {
@@ -168,7 +141,12 @@ static void pwrgov_update_commit(struct pwrgov_policy *sg_policy, u64 time,
     sg_policy->last_freq_update_time = time;
 
     if (policy->fast_switch_enabled) {
-	pwrgov_fast_switch(policy, next_freq);
+	next_freq = cpufreq_driver_fast_switch(policy, next_freq);
+	if (next_freq == CPUFREQ_ENTRY_INVALID)
+	    return;
+
+	policy->cur = next_freq;
+	trace_cpu_frequency(next_freq, smp_processor_id());
     } else {
 	sg_policy->work_in_progress = true;
 	irq_work_queue(&sg_policy->irq_work);
@@ -221,8 +199,9 @@ static inline bool use_pelt(void)
 #endif
 }
 
-static void pwrgov_get_util(unsigned long *util, unsigned long *max, int cpu, u64 time)
+static void pwrgov_get_util(unsigned long *util, unsigned long *max, u64 time)
 {
+    int cpu = smp_processor_id();
     struct rq *rq = cpu_rq(cpu);
     unsigned long max_cap, rt;
     s64 delta;
@@ -281,7 +260,7 @@ static void pwrgov_iowait_boost(struct pwrgov_cpu *sg_cpu, unsigned long *util,
 #ifdef CONFIG_NO_HZ_COMMON
 static bool pwrgov_cpu_is_busy(struct pwrgov_cpu *sg_cpu)
 {
-    unsigned long idle_calls = tick_nohz_get_idle_calls_cpu(sg_cpu->cpu);
+    unsigned long idle_calls = tick_nohz_get_idle_calls();
     bool ret = idle_calls == sg_cpu->saved_idle_calls;
 
     sg_cpu->saved_idle_calls = idle_calls;
@@ -312,20 +291,15 @@ static void pwrgov_update_single(struct update_util_data *hook, u64 time,
     if (flags & SCHED_CPUFREQ_DL) {
 	next_f = policy->cpuinfo.max_freq;
     } else {
-	pwrgov_get_util(&util, &max, sg_cpu->cpu, time);
+	pwrgov_get_util(&util, &max, time);
 	pwrgov_iowait_boost(sg_cpu, &util, &max);
 	next_f = get_next_freq(sg_policy, util, max);
 	/*
 	 * Do not reduce the frequency if the CPU has not been idle
 	 * recently, as the reduction is likely to be premature then.
 	 */
-	if (busy && next_f < sg_policy->next_freq &&
-	    sg_policy->next_freq != UINT_MAX) {
+	if (busy && next_f < sg_policy->next_freq)
 	    next_f = sg_policy->next_freq;
-
-	/* Reset cached freq as next_freq has changed */
-	sg_policy->cached_raw_freq = 0;
-        }
     }
     pwrgov_update_commit(sg_policy, time, next_f);
 }
@@ -379,7 +353,7 @@ static void pwrgov_update_shared(struct update_util_data *hook, u64 time,
     unsigned long util, max;
     unsigned int next_f;
 
-    pwrgov_get_util(&util, &max, sg_cpu->cpu, time);
+    pwrgov_get_util(&util, &max, time);
 
     raw_spin_lock(&sg_policy->update_lock);
 
@@ -416,15 +390,9 @@ static void pwrgov_work(struct kthread_work *work)
 
 static void pwrgov_irq_work(struct irq_work *irq_work)
 {
-    struct pwrgov_policy *sg_policy = container_of(irq_work, struct
-						      pwrgov_policy, irq_work);
-    struct cpufreq_policy *policy = sg_policy->policy;
+    struct pwrgov_policy *sg_policy;
 
-    if (policy->fast_switch_enabled) {
-		pwrgov_fast_switch(policy, sg_policy->next_freq);
-		sg_policy->work_in_progress = false;
-		return;
-	}
+    sg_policy = container_of(irq_work, struct pwrgov_policy, irq_work);
 
     /*
      * For RT and deadline tasks, the pwrutilx governor shoots the
@@ -607,11 +575,7 @@ static int pwrgov_kthread_create(struct pwrgov_policy *sg_policy)
     }
 
     sg_policy->thread = thread;
-
-    /* Kthread is bound to all CPUs by default */
-    if (!policy->dvfs_possible_from_any_cpu)
-    	    kthread_bind_mask(thread, policy->related_cpus);
-
+    kthread_bind_mask(thread, policy->related_cpus);
     init_irq_work(&sg_policy->irq_work, pwrgov_irq_work);
     mutex_init(&sg_policy->work_lock);
 
@@ -820,9 +784,8 @@ static int pwrgov_start(struct cpufreq_policy *policy)
 	struct pwrgov_cpu *sg_cpu = &per_cpu(pwrgov_cpu, cpu);
 
 	memset(sg_cpu, 0, sizeof(*sg_cpu));
-	sg_cpu->cpu = cpu;
 	sg_cpu->sg_policy = sg_policy;
-	sg_cpu->flags = 0;
+	sg_cpu->flags = SCHED_CPUFREQ_DL;
 	sg_cpu->iowait_boost_max = policy->cpuinfo.max_freq;
 	cpufreq_add_update_util_hook(cpu, &sg_cpu->update_util,
 		         policy_is_shared(policy) ?
