@@ -12,19 +12,19 @@ clear
 THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
 KERNEL="Image"
 DTBIMAGE="dtb"
-export CROSS_COMPILE=~/Android/kernel/tc/gcc/aosp/aarch64-linux-android-4.9/bin/aarch64-linux-android-
-DEFCONFIG="mido_defconfig"
+export CROSS_COMPILE=~/kernel/gcc/linaro-7/bin/aarch64-opt-linux-android-
+DEFCONFIG="revolt_defconfig"
 
 # Kernel Details
-VER=".EAS"
+VER=".EAS-03"
 
 # Paths
 KERNEL_DIR=`pwd`
-REPACK_DIR=~/Android/kernel/AnyKernel2/
-PATCH_DIR=~/Android/kernel/AnyKernel2/patch
-MODULES_DIR=~/Android/kernel/AnyKernel2/modules
-ZIP_MOVE=~/Android/kernel/AK-releases/
-ZIMAGE_DIR=~/Android/kernel/EAS/arch/arm64/boot
+REPACK_DIR=~/kernel/AnyKernel2/
+PATCH_DIR=~/kernel/AnyKernel2/patch
+MODULES_DIR=~/kernel/AnyKernel2/modules
+ZIP_MOVE=~/kernel/AK-releases/
+ZIMAGE_DIR=~/kernel/EAS/arch/arm64/boot
 
 # Functions
 function clean_all {
@@ -69,6 +69,7 @@ echo -e "${restore}"
 # Vars
 BASE_AK_VER="REVOLT"
 DATE=`date +"%Y%m%d-%H%M"`
+AK_VER="$BASE_AK_VER$VER"
 ZIP_NAME="$AK_VER"-"$DATE".zip
 export LOCALVERSION=~`echo $AK_VER`
 export LOCALVERSION=~`echo $AK_VER`
