@@ -12,22 +12,22 @@ clear
 THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
 KERNEL="Image"
 DTBIMAGE="dtb"
-export CLANG_PATH=~/aex/prebuilts/clang/host/linux-x86/dragontc-7.0/bin/clang
+export CLANG_PATH= ~/Android/kernel/tc/clang/aosp/clang-r328903/bin/clang
 export PATH=${CLANG_PATH}:${PATH}
 export CLANG_TRIPLE=aarch64-linux-gnu-
-export CROSS_COMPILE=~/kernel/gcc/aosp/aarch64-linux-android-4.9/bin/aarch64-linux-android-
+export CROSS_COMPILE=~/Android/kernel/tc/gcc/aosp/aarch64-linux-android-4.9/bin/aarch64-linux-android-
 DEFCONFIG="revolt_defconfig"
 
 # Kernel Details
-VER=".EAS-0.3"
+VER=".EAS-0.4"
 
 # Paths
 KERNEL_DIR=`pwd`
-REPACK_DIR=~/kernel/AnyKernel2/
-PATCH_DIR=~/kernel/AnyKernel2/patch
-MODULES_DIR=~/kernel/AnyKernel2/modules
-ZIP_MOVE=~/kernel/AK-releases/
-ZIMAGE_DIR=~/kernel/EAS/arch/arm64/boot
+REPACK_DIR=~/Android/kernel/AnyKernel2/
+PATCH_DIR=~/Android/kernel/AnyKernel2/patch
+MODULES_DIR=~/Android/kernel/AnyKernel2/modules
+ZIP_MOVE=~/Android/kernel/AK-releases/
+ZIMAGE_DIR=~/Android/kernel/EAS/arch/arm64/boot
 
 # Functions
 function clean_all {
