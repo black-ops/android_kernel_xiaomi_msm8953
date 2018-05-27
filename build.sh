@@ -16,7 +16,7 @@ export CROSS_COMPILE=~/Android/kernel/tc/gcc/aosp/aarch64-linux-android-4.9/bin/
 DEFCONFIG="revolt_defconfig"
 
 # Kernel Details
-VER=".EAS-REBASE"
+VER=".EAS-R4"
 
 # Paths
 KERNEL_DIR=`pwd`
