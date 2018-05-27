@@ -363,7 +363,7 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-OPTS			= -g0 -mcpu=cortex-a53+crc+crypto+sve -march=armv8-a+crc+crypto+sve -mtune=cortex-a53 -funsafe-math-optimizations -funroll-loops -ffast-math -fvectorize -fslp-vectorize -fmodulo-sched -fmodulo-sched-allow-regmoves -ftree-vectorize -ftree-slp-vectorize -fvect-cost-model -fgcse-after-reload -fgcse-sm -ffast-math -fsingle-precision-constant -Wno-ignored-optimization-argument
+OPTS			= -g0  -mtune=cortex-a53 -funsafe-math-optimizations -funroll-loops -ffast-math -fmodulo-sched -fmodulo-sched-allow-regmoves -ftree-vectorize -ftree-slp-vectorize -fvect-cost-model -fgcse-after-reload -fgcse-sm -ffast-math -fsingle-precision-constant -Wno-ignored-optimization-argument
 GCC6WARNINGS	= -Wno-bool-compare -Wno-misleading-indentation -Wno-format -Wno-logical-not-parentheses
 GCC7WARNINGS	= $(GCC6WARNINGS) -Wno-int-in-bool-context -Wno-memset-elt-size -Wno-parentheses -Wno-bool-operation -Wno-duplicate-decl-specifier -Wno-stringop-overflow -Wno-format-truncation -Wno-format-overflow -fno-modulo-sched
 GCC8WARNINGS	= $(GCC7WARNINGS) -Wno-multistatement-macros -Wno-error=sizeof-pointer-div -Wno-sizeof-pointer-div
