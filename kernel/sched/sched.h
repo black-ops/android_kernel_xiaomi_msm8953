@@ -589,6 +589,8 @@ struct root_domain {
 };
 
 extern struct root_domain def_root_domain;
+extern void sched_get_rd(struct root_domain *rd);
+extern void sched_put_rd(struct root_domain *rd);
 
 #ifdef HAVE_RT_PUSH_IPI
 extern void rto_push_irq_work_func(struct irq_work *work);
@@ -1591,6 +1593,13 @@ unsigned long arch_scale_cpu_capacity(struct sched_domain *sd, int cpu)
 }
 #endif
 
+#ifndef arch_update_cpu_capacity
+static __always_inline
+void arch_update_cpu_capacity(int cpu)
+{
+}
+#endif
+
 #ifdef CONFIG_SMP
 static inline unsigned long capacity_of(int cpu)
 {
@@ -1605,6 +1614,19 @@ static inline unsigned long capacity_orig_of(int cpu)
 extern unsigned int sysctl_sched_use_walt_cpu_util;
 extern unsigned int walt_ravg_window;
 extern bool walt_disabled;
+
+static inline unsigned long task_util(struct task_struct *p)
+{
+
+#ifdef CONFIG_SCHED_WALT
+	if (!walt_disabled && sysctl_sched_use_walt_task_util) {
+		unsigned long demand = p->ravg.demand;
+		return (demand << 10) / walt_ravg_window;
+	}
+#endif
+	return p->se.avg.util_avg;
+}
+
 
 /*
  * cpu_util returns the amount of capacity of a CPU that is used by CFS
@@ -1828,6 +1850,11 @@ static inline void double_rq_unlock(struct rq *rq1, struct rq *rq2)
 	else
 		__release(rq2->lock);
 }
+
+/*
+ * task_may_not_preempt - check whether a task may not be preemptible soon
+ */
+extern bool task_may_not_preempt(struct task_struct *task, int cpu);
 
 #else /* CONFIG_SMP */
 
