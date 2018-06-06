@@ -13,7 +13,7 @@ THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
 KERNEL="Image"
 DTBIMAGE="dtb"
 
-DEFCONFIG="mido_defconfig"
+DEFCONFIG="revolt_defconfig"
 
 
 ## Always ARM64
