@@ -345,14 +345,14 @@ static void sugov_update_single(struct update_util_data *hook, u64 time,
 	if (flags & SCHED_CPUFREQ_DL) {
 		next_f = policy->cpuinfo.max_freq;
 	} else {
-		sugov_get_util(&util, &max, time);
+		sugov_get_util(&util, &max,sg_cpu->cpu, time);
 		sugov_iowait_boost(sg_cpu, &util, &max);
 		next_f = get_next_freq(sg_policy, util, max);
 		/*
 		 * Do not reduce the frequency if the CPU has not been idle
 		 * recently, as the reduction is likely to be premature then.
 		 */
-		if (busy && next_f < sg_policy->next_freq) &&
+		if (busy && next_f < sg_policy->next_freq &&
 			sg_policy->next_freq != UINT_MAX) {
 			next_f = sg_policy->next_freq;
 
